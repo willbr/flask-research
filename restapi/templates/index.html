@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Data Table</title>
+    <title>Column-Oriented JSON Data Table</title>
     <style>
         table {
             width: 50%;
@@ -21,11 +22,11 @@
 </head>
 <body>
 
-    <h1>CSV Data from API</h1>
+    <h1>Column-Oriented JSON Data from API</h1>
     
-    <button id="fetchCsvBtn">Fetch CSV Data</button>
+    <button id="fetchJsonBtn">Fetch JSON Data</button>
     
-    <table id="csvTable">
+    <table id="jsonTable">
         <thead>
             <tr>
                 <th>Name</th>
@@ -39,37 +40,35 @@
     </table>
 
     <script>
-        document.getElementById('fetchCsvBtn').addEventListener('click', function() {
-            fetch('/csv') // This assumes Flask is running on the same server
-                .then(response => response.text()) // Get the CSV data as text
+        document.getElementById('fetchJsonBtn').addEventListener('click', function() {
+            fetch('/json') // This assumes Flask is running on the same server
+                .then(response => response.json()) // Parse the JSON data
                 .then(data => {
-                    const tableBody = document.querySelector('#csvTable tbody');
+                    const tableBody = document.querySelector('#jsonTable tbody');
                     tableBody.innerHTML = ''; // Clear existing table content
-                    
-                    // Parse the CSV data
-                    const rows = data.split('\n').slice(1); // Skip the header
-                    rows.forEach(row => {
-                        if (row.trim() !== '') {
-                            const cells = row.split(',');
-                            const newRow = document.createElement('tr');
 
-                            // Create table cells and append them to the row
-                            cells.forEach(cell => {
-                                const newCell = document.createElement('td');
-                                newCell.textContent = cell.trim();
-                                newRow.appendChild(newCell);
-                            });
+                    // Get the length of one of the columns to iterate over rows
+                    const numRows = data.name.length;
 
-                            tableBody.appendChild(newRow);
-                        }
-                    });
+                    // Loop over the rows and populate the table
+                    for (let i = 0; i < numRows; i++) {
+                        const newRow = document.createElement('tr');
+
+                        // Create table cells for each column
+                        ['name', 'age', 'city'].forEach(column => {
+                            const newCell = document.createElement('td');
+                            newCell.textContent = data[column][i];  // Access by index
+                            newRow.appendChild(newCell);
+                        });
+
+                        tableBody.appendChild(newRow);
+                    }
                 })
                 .catch(error => {
-                    console.error('Error fetching the CSV data:', error);
+                    console.error('Error fetching the JSON data:', error);
                 });
         });
     </script>
 
 </body>
 </html>
-

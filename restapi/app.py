@@ -1,10 +1,8 @@
-from flask import Flask, render_template, jsonify, make_response
-import csv
-import io
+from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
 
-# Sample data for CSV
+# Sample data
 data = [
     {"name": "Alice", "age": 30, "city": "New York"},
     {"name": "Bob", "age": 25, "city": "Los Angeles"},
@@ -16,21 +14,16 @@ data = [
 def index():
     return render_template('index.html')  # This will serve the HTML file
 
-# Route to serve CSV data
-@app.route('/csv', methods=['GET'])
-def get_csv_data():
-    # Create an in-memory CSV file
-    csv_file = io.StringIO()
-    csv_writer = csv.DictWriter(csv_file, fieldnames=["name", "age", "city"])
-    csv_writer.writeheader()
-    csv_writer.writerows(data)
-    
-    # Create a response and set the correct headers for a CSV file download
-    response = make_response(csv_file.getvalue())
-    response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
-    response.headers['Content-Type'] = 'text/csv'
-    return response
+# Route to return column-oriented JSON data
+@app.route('/json', methods=['GET'])
+def get_json_data():
+    # Transforming the data into column-oriented format
+    column_oriented_data = {
+        "name": [row['name'] for row in data],
+        "age": [row['age'] for row in data],
+        "city": [row['city'] for row in data]
+    }
+    return jsonify(column_oriented_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
