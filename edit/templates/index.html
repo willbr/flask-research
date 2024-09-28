@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Data Table with Editable Age</title>
+    <style>
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .clickable {
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .editable {
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>JSON Data Table with Editable Age</h1>
+    
+    <button id="fetchJsonBtn">Fetch JSON Data</button>
+    
+    <table id="jsonTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>City</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+
+    <div id="details">
+        <!-- Details will be shown here after clicking a name -->
+    </div>
+
+    <script>
+        // Fetch and populate table data
+        document.getElementById('fetchJsonBtn').addEventListener('click', function() {
+            fetch('/json')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#jsonTable tbody');
+                    tableBody.innerHTML = ''; // Clear existing table content
+
+                    const numRows = data.name.length;
+
+                    // Loop over each row and populate the table
+                    for (let i = 0; i < numRows; i++) {
+                        const newRow = document.createElement('tr');
+
+                        // Create a clickable name cell
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = data['name'][i];
+                        nameCell.classList.add('clickable');
+                        newRow.appendChild(nameCell);
+
+                        // Create an editable age cell
+                        const ageCell = document.createElement('td');
+                        ageCell.textContent = data['age'][i];
+                        ageCell.classList.add('editable');
+                        ageCell.setAttribute('contenteditable', 'true');  // Make age editable
+                        ageCell.setAttribute('data-id', data['id'][i]);   // Store the ID in a data attribute
+                        ageCell.addEventListener('blur', updateAge);       // Add event listener for changes
+                        newRow.appendChild(ageCell);
+
+                        // Add city cell
+                        const cityCell = document.createElement('td');
+                        cityCell.textContent = data['city'][i];
+                        newRow.appendChild(cityCell);
+
+                        tableBody.appendChild(newRow);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the JSON data:', error);
+                });
+        });
+
+        // Function to update the age on blur
+        function updateAge(event) {
+            const id = event.target.getAttribute('data-id');  // Get the ID from the clicked name's data attribute
+            const newAge = event.target.textContent;          // Get the new age value from the cell
+
+            // Send the updated age to the server via a PUT request
+            fetch(`/update/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ age: newAge })  // Send the new age in the request body
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch(error => {
+                console.error('Error updating the age:', error);
+            });
+        }
+    </script>
+
+</body>
+</html>
