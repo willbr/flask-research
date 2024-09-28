@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Column-Oriented JSON Data Table</title>
+    <title>JSON Data Table with Click Event</title>
     <style>
         table {
             width: 50%;
@@ -18,11 +17,16 @@
             padding: 8px;
             text-align: left;
         }
+        .clickable {
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Column-Oriented JSON Data from API</h1>
+    <h1>JSON Data Table with Clickable Names</h1>
     
     <button id="fetchJsonBtn">Fetch JSON Data</button>
     
@@ -39,28 +43,43 @@
         </tbody>
     </table>
 
+    <div id="details">
+        <!-- Details will be shown here after clicking a name -->
+    </div>
+
     <script>
         document.getElementById('fetchJsonBtn').addEventListener('click', function() {
-            fetch('/json') // This assumes Flask is running on the same server
-                .then(response => response.json()) // Parse the JSON data
+            fetch('/json')  // Fetch data from /json endpoint
+                .then(response => response.json())
                 .then(data => {
                     const tableBody = document.querySelector('#jsonTable tbody');
                     tableBody.innerHTML = ''; // Clear existing table content
 
-                    // Get the length of one of the columns to iterate over rows
+                    // Get number of rows (length of any column)
                     const numRows = data.name.length;
 
-                    // Loop over the rows and populate the table
+                    // Loop over each row and populate the table
                     for (let i = 0; i < numRows; i++) {
                         const newRow = document.createElement('tr');
 
-                        // Create table cells for each column
-                        ['name', 'age', 'city'].forEach(column => {
-                            const newCell = document.createElement('td');
-                            newCell.textContent = data[column][i];  // Access by index
-                            newRow.appendChild(newCell);
-                        });
+                        // Create a clickable name cell
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = data['name'][i];
+                        nameCell.classList.add('clickable');
+                        nameCell.setAttribute('data-id', data['id'][i]);  // Store the ID in a data attribute
+                        nameCell.addEventListener('click', fetchDetails);  // Add event listener for clicks
+                        newRow.appendChild(nameCell);
 
+                        // Add other columns (age and city)
+                        const ageCell = document.createElement('td');
+                        ageCell.textContent = data['age'][i];
+                        newRow.appendChild(ageCell);
+
+                        const cityCell = document.createElement('td');
+                        cityCell.textContent = data['city'][i];
+                        newRow.appendChild(cityCell);
+
+                        // Append the row to the table body
                         tableBody.appendChild(newRow);
                     }
                 })
@@ -68,6 +87,22 @@
                     console.error('Error fetching the JSON data:', error);
                 });
         });
+
+        // Function to fetch details using the ID
+        function fetchDetails(event) {
+            const id = event.target.getAttribute('data-id');  // Get the ID from the clicked name's data attribute
+            fetch(`/details/${id}`)  // Call the second API with the ID
+                .then(response => response.json())
+                .then(details => {
+                    const detailsDiv = document.getElementById('details');
+                    detailsDiv.innerHTML = `<h3>Details for ${details.name}</h3>
+                                            <p>Age: ${details.age}</p>
+                                            <p>City: ${details.city}</p>`;
+                })
+                .catch(error => {
+                    console.error('Error fetching the details:', error);
+                });
+        }
     </script>
 
 </body>
